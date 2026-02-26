@@ -55,3 +55,18 @@ initialize_system() {
         touch "$SUBMISSIONS_INDEX"
     fi
 }
+
+############################################################################
+# VALIDATE FILE EXTENSION
+#############################################################################
+validate_file_extension() {
+    local filename="$1"
+    local extension="${filename##*.}"
+    extension=$(echo "$extension" | tr '[:upper:]' '[:lower:]')
+    
+    if [ "$extension" = "pdf" ] || [ "$extension" = "docx" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
