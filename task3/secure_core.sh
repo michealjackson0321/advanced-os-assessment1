@@ -109,3 +109,22 @@ check_duplicate_filename() {
         return 1  # Not a duplicate
     fi
 }
+
+#############################################################################
+# CHECK FOR DUPLICATE CONTENT (SHA-256 HASH)
+#############################################################################
+check_duplicate_content() {
+    local filepath="$1"
+    
+    # Calculate SHA-256 hash
+    local hash=$(sha256sum "$filepath" | awk '{print $1}')
+    
+    # Check if this hash already exists in the index
+    if grep -q "|${hash}|" "$SUBMISSIONS_INDEX" 2>/dev/null; then
+        echo "$hash"
+        return 0  # Duplicate content found
+    else
+        echo "$hash"
+        return 1  # Not a duplicate
+    fi
+}
