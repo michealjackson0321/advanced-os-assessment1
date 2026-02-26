@@ -36,3 +36,22 @@ log_event() {
     
     echo "${timestamp} | STUDENT=${student_id} | FILE=${filename} | STATUS=${status} | ${details}" >> "$SUBMISSION_LOG"
 }
+
+#############################################################################
+# INITIALIZE SYSTEM
+#############################################################################
+initialize_system() {
+    # Create necessary directories and files if they don't exist
+    if [ ! -d "$SUBMISSION_DIR" ]; then
+        mkdir -p "$SUBMISSION_DIR"
+    fi
+    
+    if [ ! -f "$SUBMISSION_LOG" ]; then
+        touch "$SUBMISSION_LOG"
+        log_event "SYSTEM" "INIT" "INITIALIZED" "Exam submission system started"
+    fi
+    
+    if [ ! -f "$SUBMISSIONS_INDEX" ]; then
+        touch "$SUBMISSIONS_INDEX"
+    fi
+}
