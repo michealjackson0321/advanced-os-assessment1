@@ -249,3 +249,41 @@ submit_assignment() {
     
     echo ""
 }
+
+
+#############################################################################
+# VIEW STUDENT'S OWN SUBMISSIONS
+#############################################################################
+view_my_submissions() {
+    echo ""
+    echo "============================================================"
+    echo "                  MY SUBMISSIONS"
+    echo "============================================================"
+    echo ""
+    
+    read -p "Enter your Student ID: " student_id
+    student_id=$(echo "$student_id" | xargs)
+    
+    if [ -z "$student_id" ]; then
+        echo -e "${RED}Error: Student ID cannot be empty.${NC}"
+        return
+    fi
+    
+    # Filter submissions for this student
+    local submissions=$(grep "^${student_id}|" "$SUBMISSIONS_INDEX" 2>/dev/null)
+    
+    if [ -z "$submissions" ]; then
+        echo "No submissions found for Student ID: $student_id"
+    else
+        echo "Submissions for Student ID: $student_id"
+        echo "------------------------------------------------------------"
+        printf "%-30s %-20s\n" "FILENAME" "SUBMISSION DATE"
+        echo "------------------------------------------------------------"
+        
+        echo "$submissions" | while IFS='|' read -r sid filename hash timestamp; do
+            printf "%-30s %-20s\n" "$filename" "$timestamp"
+        done
+    fi
+    
+    echo ""
+}
