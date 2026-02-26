@@ -128,3 +128,124 @@ check_duplicate_content() {
         return 1  # Not a duplicate
     fi
 }
+
+#############################################################################
+# SUBMIT ASSIGNMENT
+#############################################################################
+submit_assignment() {
+    echo ""
+    echo "============================================================"
+    echo "           EXAMINATION ASSIGNMENT SUBMISSION"
+    echo "============================================================"
+    echo ""
+    
+    # Get student ID
+    read -p "Enter your Student ID: " student_id
+    student_id=$(echo "$student_id" | xargs)  # Trim whitespace
+    
+    if [ -z "$student_id" ]; then
+        echo -e "${RED}Error: Student ID cannot be empty.${NC}"
+        log_event "" "NONE" "REJECTED" "Empty student ID"
+        return
+    fi
+    
+    # Get filename/path
+    read -p "Enter the full path to your assignment file: " filepath
+    filepath=$(echo "$filepath" | xargs)  # Trim whitespace
+    
+    if [ -z "$filepath" ]; then
+        echo -e "${RED}Error: File path cannot be empty.${NC}"
+        log_event "$student_id" "NONE" "REJECTED" "Empty file path"
+        return
+    fi
+    
+    # Check if file exists
+    if [ ! -f "$filepath" ]; then
+        echo -e "${RED}Error: File does not exist: $filepath${NC}"
+        log_event "$student_id" "$filepath" "REJECTED" "File not found"
+        return
+    fi
+    
+    # Extract filename from path
+    local filename=$(basename "$filepath")
+    
+    echo ""
+    echo "Validating file: $filename"
+    echo "------------------------------------------------------------"
+    
+    # Step 1: Validate file extension
+    echo -n "Checking file format... "
+    if ! validate_file_extension "$filename"; then
+        echo -e "${RED}FAILED${NC}"
+        echo -e "${RED}Error: Invalid file format. Only PDF and DOCX files are accepted.${NC}"
+        log_event "$student_id" "$filename" "REJECTED" "Invalid format (only .pdf and .docx allowed)"
+        return
+    fi
+    echo -e "${GREEN}OK${NC}"
+    
+    # Step 2: Validate file size
+    echo -n "Checking file size... "
+    local filesize=$(validate_file_size "$filepath")
+    local validate_result=$?
+    
+    if [ $validate_result -ne 0 ]; then
+        local size_mb=$(echo "scale=2; $filesize / 1048576" | bc)
+        echo -e "${RED}FAILED${NC}"
+        echo -e "${RED}Error: File size exceeds 5MB limit (${size_mb}MB).${NC}"
+        log_event "$student_id" "$filename" "REJECTED" "File too large (${size_mb}MB, max 5MB)"
+        return
+    fi
+    
+    local size_kb=$(echo "scale=2; $filesize / 1024" | bc)
+    echo -e "${GREEN}OK (${size_kb}KB)${NC}"
+    
+    # Step 3: Check for duplicate filename
+    echo -n "Checking for duplicate filename... "
+    if check_duplicate_filename "$student_id" "$filename"; then
+        echo -e "${RED}FAILED${NC}"
+        echo -e "${RED}Error: You have already submitted a file with this name.${NC}"
+        log_event "$student_id" "$filename" "REJECTED" "Duplicate filename"
+        return
+    fi
+    echo -e "${GREEN}OK${NC}"
+    
+    # Step 4: Check for duplicate content
+    echo -n "Checking for duplicate content... "
+    local hash=$(check_duplicate_content "$filepath")
+    local duplicate_result=$?
+    
+    if [ $duplicate_result -eq 0 ]; then
+        echo -e "${RED}FAILED${NC}"
+        echo -e "${RED}Error: This file content has already been submitted (possibly with a different name).${NC}"
+        log_event "$student_id" "$filename" "REJECTED" "Duplicate content (SHA-256: ${hash})"
+        return
+    fi
+    echo -e "${GREEN}OK${NC}"
+    
+    # All validations passed - copy file to submissions directory
+    local dest_path="${SUBMISSION_DIR}/${student_id}_${filename}"
+    
+    if cp "$filepath" "$dest_path"; then
+        # Add entry to submissions index
+        local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+        echo "${student_id}|${filename}|${hash}|${timestamp}" >> "$SUBMISSIONS_INDEX"
+        
+        echo ""
+        echo "============================================================"
+        echo -e "${GREEN}✓ SUBMISSION SUCCESSFUL${NC}"
+        echo "============================================================"
+        echo "Student ID:  $student_id"
+        echo "File:        $filename"
+        echo "Size:        ${size_kb}KB"
+        echo "Hash:        ${hash:0:16}..."
+        echo "Timestamp:   $timestamp"
+        echo "============================================================"
+        
+        log_event "$student_id" "$filename" "ACCEPTED" "File stored successfully (${size_kb}KB)"
+    else
+        echo -e "${RED}Error: Failed to copy file to submission directory.${NC}"
+        log_event "$student_id" "$filename" "REJECTED" "File copy failed"
+    fi
+    
+    echo ""
+}
