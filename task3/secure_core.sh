@@ -14,7 +14,7 @@
 SUBMISSION_DIR="Submissions"
 SUBMISSION_LOG="submission_log.txt"
 SUBMISSIONS_INDEX="submissions_index.txt"
-LOGIN_MONITOR_SCRIPT="login_monitor.py"
+LOGIN_MONITOR_SCRIPT="$(dirname "$0")/login_monitor.py"
 MAX_FILE_SIZE=$((5 * 1024 * 1024))  # 5MB in bytes
 
 # Colors for better visibility (optional)
@@ -334,7 +334,16 @@ account_login() {
     fi
     
     # Call the Python login monitor with the log file path
-    python3 "$LOGIN_MONITOR_SCRIPT" "$SUBMISSION_LOG"
+    # Support py launcher (Windows), python3 (Linux/macOS), python (fallback)
+    if command -v py &>/dev/null; then
+        py "$LOGIN_MONITOR_SCRIPT" "$SUBMISSION_LOG"
+    elif command -v python3 &>/dev/null && python3 --version &>/dev/null 2>&1; then
+        python3 "$LOGIN_MONITOR_SCRIPT" "$SUBMISSION_LOG"
+    elif command -v python &>/dev/null; then
+        python "$LOGIN_MONITOR_SCRIPT" "$SUBMISSION_LOG"
+    else
+        echo -e "${RED}Error: Python is not installed or not in PATH.${NC}"
+    fi
     
     echo ""
 }
