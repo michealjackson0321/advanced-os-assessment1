@@ -316,3 +316,42 @@ def view_completed_jobs() -> None:
     
     except Exception as e:
         print(f"Error reading completed jobs: {e}")
+
+def process_job_queue() -> None:
+    """Prompt user to select scheduling algorithm and process the queue."""
+    jobs = load_jobs()
+    
+    if not jobs:
+        print("\nNo jobs in queue to process.\n")
+        return
+    
+    print("\n" + "=" * 70)
+    print("                    SELECT SCHEDULING ALGORITHM")
+    print("=" * 70)
+    print("1) Round Robin (Time Quantum = 5 seconds)")
+    print("2) Priority Scheduling (Highest priority first)")
+    print("")
+    
+    choice = input("Enter your choice [1-2]: ").strip()
+    
+    if choice == "1":
+        round_robin_scheduling()
+    elif choice == "2":
+        priority_scheduling()
+    else:
+        print("\nInvalid choice. Returning to main menu.\n")
+
+
+def bye_exit() -> None:
+    """Handle graceful exit with confirmation."""
+    print("")
+    confirm = input("Are you sure you want to exit? (Y/N): ").strip().upper()
+    
+    if confirm in ["Y", "YES"]:
+        print("\nBye")
+        log_event("Job scheduler exited by user")
+        sys.exit(0)
+    elif confirm in ["N", "NO"]:
+        print("Exit cancelled. Returning to main menu.\n")
+    else:
+        print("Invalid input. Exit cancelled.\n")
