@@ -375,3 +375,21 @@ exit_system() {
         esac
     done
 }
+
+#############################################################################
+# DISPLAY MENU
+#############################################################################
+display_menu() {
+    echo ""
+    echo "============================================================"
+    echo "   SECURE EXAMINATION SUBMISSION AND ACCESS CONTROL SYSTEM"
+    echo "============================================================"
+    echo ""
+    echo "  1. Submit Assignment"
+    echo "  2. View My Submissions"
+    echo "  3. List All Submissions (Admin)"
+    echo "  4. Login / Account Management"
+    echo "  5. Exit (Bye)"
+    echo ""
+    echo "============================================================"
+}
