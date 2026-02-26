@@ -94,3 +94,18 @@ validate_file_size() {
         return 1
     fi
 }
+
+#############################################################################
+# CHECK FOR DUPLICATE FILENAME
+#############################################################################
+check_duplicate_filename() {
+    local student_id="$1"
+    local filename="$2"
+    
+    # Check if this student has already submitted a file with this name
+    if grep -q "^${student_id}|${filename}|" "$SUBMISSIONS_INDEX" 2>/dev/null; then
+        return 0  # Duplicate found
+    else
+        return 1  # Not a duplicate
+    fi
+}
