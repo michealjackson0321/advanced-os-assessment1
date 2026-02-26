@@ -24,3 +24,15 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+#############################################################################
+# LOGGING FUNCTION
+#############################################################################
+log_event() {
+    local student_id="$1"
+    local filename="$2"
+    local status="$3"
+    local details="$4"
+    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    
+    echo "${timestamp} | STUDENT=${student_id} | FILE=${filename} | STATUS=${status} | ${details}" >> "$SUBMISSION_LOG"
+}
