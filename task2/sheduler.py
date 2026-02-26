@@ -170,3 +170,70 @@ def submit_job() -> None:
     
     except Exception as e:
         print(f"Error: Failed to submit job: {e}")
+
+
+def round_robin_scheduling() -> None:
+    """Process jobs using Round Robin scheduling with 5-second time quantum."""
+    jobs = load_jobs()
+    
+    if not jobs:
+        print("\nNo jobs to schedule.\n")
+        return
+    
+    TIME_QUANTUM = 5
+    print(f"\n{'=' * 70}")
+    print(f"       ROUND ROBIN SCHEDULING (Time Quantum = {TIME_QUANTUM} seconds)")
+    print("=" * 70 + "\n")
+    
+    # Initialize remaining time for each job
+    for job in jobs:
+        job["remaining"] = job["exec_time"]
+    
+    execution_log = []
+    cycle = 1
+    
+    # Process jobs in round-robin fashion
+    while any(job["remaining"] > 0 for job in jobs):
+        print(f"--- Cycle {cycle} ---")
+        
+        for job in jobs:
+            if job["remaining"] <= 0:
+                continue
+            
+            # Determine how much time this job gets in this cycle
+            run_time = min(TIME_QUANTUM, job["remaining"])
+            job["remaining"] -= run_time
+            
+            print(
+                f"  Running: {job['job_name']} (Student: {job['student_id']}) "
+                f"for {run_time}s | Remaining: {job['remaining']}s"
+            )
+            
+            execution_log.append({
+                "student_id": job["student_id"],
+                "job_name": job["job_name"],
+                "run_time": run_time,
+                "remaining": job["remaining"]
+            })
+            
+            log_event(
+                f"RR_EXECUTION | Student={job['student_id']} | Job={job['job_name']} | "
+                f"RunTime={run_time}s | Remaining={job['remaining']}s"
+            )
+            
+            # If job completed, record it
+            if job["remaining"] == 0:
+                append_completed_job(job, "RoundRobin")
+                print(f"    ✓ Job '{job['job_name']}' COMPLETED")
+        
+        cycle += 1
+        print()
+    
+    # Clear the job queue
+    save_jobs([])
+    
+    print("=" * 70)
+    print("All jobs completed using Round Robin scheduling.")
+    print("=" * 70 + "\n")
+    
+    log_event(f"Round Robin scheduling completed: {len(jobs)} job(s) processed")
