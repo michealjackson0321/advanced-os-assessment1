@@ -1,0 +1,7 @@
+2026-02-26 16:21:48 | System monitor initialized
+2026-02-26 16:22:17 | Viewed CPU and memory usage statistics
+2026-02-26 16:22:34 | Listed top 10 memory consuming processes
+2026-02-26 16:22:51 | Disk inspection failed: Directory  not found
+2026-02-26 16:22:55 | System monitor exited by user
+2026-02-26 16:24:57 | Viewed CPU and memory usage statistics
+2026-02-26 16:25:23 | System monitor exited by user
