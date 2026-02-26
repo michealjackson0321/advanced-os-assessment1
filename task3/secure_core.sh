@@ -315,3 +315,26 @@ list_all_submissions() {
     
     echo ""
 }
+
+#############################################################################
+# LOGIN / ACCOUNT MANAGEMENT
+#############################################################################
+account_login() {
+    echo ""
+    echo "============================================================"
+    echo "           ACCOUNT LOGIN & SECURITY CHECK"
+    echo "============================================================"
+    echo ""
+    
+    # Check if login monitor script exists
+    if [ ! -f "$LOGIN_MONITOR_SCRIPT" ]; then
+        echo -e "${RED}Error: Login monitoring system not found.${NC}"
+        echo "Expected: $LOGIN_MONITOR_SCRIPT"
+        return
+    fi
+    
+    # Call the Python login monitor with the log file path
+    python3 "$LOGIN_MONITOR_SCRIPT" "$SUBMISSION_LOG"
+    
+    echo ""
+}
