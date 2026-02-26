@@ -287,3 +287,31 @@ view_my_submissions() {
     
     echo ""
 }
+
+
+#############################################################################
+# LIST ALL SUBMISSIONS (ADMIN VIEW)
+#############################################################################
+list_all_submissions() {
+    echo ""
+    echo "============================================================"
+    echo "              ALL SUBMISSIONS (ADMIN VIEW)"
+    echo "============================================================"
+    echo ""
+    
+    if [ ! -s "$SUBMISSIONS_INDEX" ]; then
+        echo "No submissions recorded yet."
+    else
+        local count=$(wc -l < "$SUBMISSIONS_INDEX")
+        echo "Total submissions: $count"
+        echo "------------------------------------------------------------"
+        printf "%-12s %-30s %-20s\n" "STUDENT ID" "FILENAME" "SUBMISSION DATE"
+        echo "------------------------------------------------------------"
+        
+        while IFS='|' read -r student_id filename hash timestamp; do
+            printf "%-12s %-30s %-20s\n" "$student_id" "$filename" "$timestamp"
+        done < "$SUBMISSIONS_INDEX"
+    fi
+    
+    echo ""
+}
