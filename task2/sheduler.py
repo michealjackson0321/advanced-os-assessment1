@@ -237,3 +237,45 @@ def round_robin_scheduling() -> None:
     print("=" * 70 + "\n")
     
     log_event(f"Round Robin scheduling completed: {len(jobs)} job(s) processed")
+
+def priority_scheduling() -> None:
+    """Process jobs using Priority scheduling (highest priority first)."""
+    jobs = load_jobs()
+    
+    if not jobs:
+        print("\nNo jobs to schedule.\n")
+        return
+    
+    print(f"\n{'=' * 70}")
+    print("          PRIORITY SCHEDULING (Highest Priority First)")
+    print("=" * 70 + "\n")
+    
+    # Sort jobs by priority in descending order (10 is highest priority)
+    sorted_jobs = sorted(jobs, key=lambda j: j["priority"], reverse=True)
+    
+    print(f"{'#':<4} {'Student ID':<12} {'Job Name':<20} {'Time(s)':<8} {'Priority':<8}")
+    print("-" * 70)
+    
+    for idx, job in enumerate(sorted_jobs, start=1):
+        print(
+            f"{idx:<4} {job['student_id']:<12} {job['job_name']:<20} "
+            f"{job['exec_time']:<8} {job['priority']:<8}"
+        )
+        
+        log_event(
+            f"PRIORITY_EXECUTION | Student={job['student_id']} | Job={job['job_name']} | "
+            f"ExecTime={job['exec_time']}s | Priority={job['priority']}"
+        )
+        
+        # Record completed job
+        append_completed_job(job, "Priority")
+    
+    # Clear the job queue
+    save_jobs([])
+    
+    print("\n" + "=" * 70)
+    print("All jobs completed using Priority scheduling.")
+    print("=" * 70 + "\n")
+    
+    log_event(f"Priority scheduling completed: {len(sorted_jobs)} job(s) processed")
+
