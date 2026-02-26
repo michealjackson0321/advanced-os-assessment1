@@ -338,3 +338,40 @@ account_login() {
     
     echo ""
 }
+
+
+#############################################################################
+# EXIT WITH CONFIRMATION
+#############################################################################
+exit_system() {
+    echo ""
+    echo "============================================================"
+    echo "                    EXIT CONFIRMATION"
+    echo "============================================================"
+    echo ""
+    
+    while true; do
+        read -p "Are you sure you want to exit? (Y/N): " confirmation
+        confirmation=$(echo "$confirmation" | tr '[:lower:]' '[:upper:]')
+        
+        case "$confirmation" in
+            Y|YES)
+                echo ""
+                echo "============================================================"
+                echo "                         BYE!"
+                echo "   Thank you for using the Examination Submission System"
+                echo "============================================================"
+                echo ""
+                log_event "SYSTEM" "EXIT" "SHUTDOWN" "User initiated system exit"
+                exit 0
+                ;;
+            N|NO)
+                echo "Exit cancelled. Returning to main menu..."
+                return
+                ;;
+            *)
+                echo -e "${YELLOW}Invalid input. Please enter Y or N.${NC}"
+                ;;
+        esac
+    done
+}
