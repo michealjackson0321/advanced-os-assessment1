@@ -70,3 +70,27 @@ validate_file_extension() {
         return 1
     fi
 }
+
+#############################################################################
+# VALIDATE FILE SIZE
+#############################################################################
+validate_file_size() {
+    local filepath="$1"
+    
+    # Use stat if available, otherwise fallback to wc
+    if command -v stat &> /dev/null; then
+        # Try GNU stat format first
+        local filesize=$(stat -c%s "$filepath" 2>/dev/null || stat -f%z "$filepath" 2>/dev/null)
+    else
+        # Fallback to wc -c
+        local filesize=$(wc -c < "$filepath")
+    fi
+    
+    if [ "$filesize" -le "$MAX_FILE_SIZE" ]; then
+        echo "$filesize"
+        return 0
+    else
+        echo "$filesize"
+        return 1
+    fi
+}
