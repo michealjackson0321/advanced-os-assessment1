@@ -393,3 +393,54 @@ display_menu() {
     echo ""
     echo "============================================================"
 }
+
+
+#############################################################################
+# MAIN PROGRAM LOOP
+#############################################################################
+main() {
+    # Initialize the system
+    initialize_system
+    
+    echo ""
+    echo "============================================================"
+    echo "   SECURE EXAMINATION SUBMISSION SYSTEM - INITIALIZED"
+    echo "============================================================"
+    echo ""
+    
+    # Main menu loop
+    while true; do
+        display_menu
+        
+        read -p "Enter your choice [1-5]: " choice
+        
+        case "$choice" in
+            1)
+                submit_assignment
+                ;;
+            2)
+                view_my_submissions
+                ;;
+            3)
+                list_all_submissions
+                ;;
+            4)
+                account_login
+                ;;
+            5)
+                exit_system
+                ;;
+            *)
+                echo ""
+                echo -e "${RED}Invalid choice. Please select a number between 1 and 5.${NC}"
+                echo ""
+                ;;
+        esac
+        
+        # Pause before showing menu again
+        read -p "Press Enter to continue..."
+    done
+}
+
+# Run the main program
+main
