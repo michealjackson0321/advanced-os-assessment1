@@ -18,14 +18,21 @@ show_cpu_memory() {
     echo "==== Current CPU and Memory Usage ===="
     echo ""
     
-    # Display CPU information using top
+    # Display CPU information using wmic (Windows)
     echo "CPU Usage:"
-    top -b -n1 | head -5
+    wmic cpu get Name,LoadPercentage /format:list 2>/dev/null | tr -d '\r' | grep -E "Name=|LoadPercentage="
     echo ""
-    
-    # Display memory information using free
+
+    # Display memory information using PowerShell (handles encoding correctly)
     echo "Memory Usage:"
-    free -h
+    powershell.exe -NoProfile -Command "
+        \$os = Get-WmiObject Win32_OperatingSystem;
+        \$total = [math]::Round(\$os.TotalVisibleMemorySize / 1MB, 1);
+        \$free  = [math]::Round(\$os.FreePhysicalMemory / 1MB, 1);
+        \$used  = [math]::Round(\$total - \$free, 1);
+        Write-Host ('{0,-16} {1,8} {2,8} {3,8}' -f '', 'total', 'used', 'free');
+        Write-Host ('{0,-16} {1,7}G {2,7}G {3,7}G' -f 'Mem:', \$total, \$used, \$free)
+    " 2>/dev/null | tr -d '\r'
     echo ""
     
     log_action "Viewed CPU and memory usage statistics"
@@ -36,9 +43,16 @@ list_top_memory_processes() {
     echo ""
     echo "==== Top 10 Memory Consuming Processes ===="
     echo ""
-    printf "%-8s %-10s %-6s %-6s %s\n" "PID" "USER" "CPU%" "MEM%" "COMMAND"
+    printf "%-8s %-8s %-12s %s\n" "PID" "MEM_MB" "CPU_SEC" "PROCESS"
     echo "------------------------------------------------------------"
-    ps aux --sort=-%mem | awk 'NR>1 {printf "%-8s %-10s %-6s %-6s %s\n", $2, $1, $3, $4, $11}' | head -10
+    powershell.exe -NoProfile -Command "
+        \$procs = Get-Process | Sort-Object WorkingSet64 -Descending | Select-Object -First 10;
+        foreach (\$p in \$procs) {
+            \$mem = [math]::Round(\$p.WorkingSet64/1MB, 1);
+            \$cpu = try { [math]::Round(\$p.TotalProcessorTime.TotalSeconds, 1) } catch { 0 };
+            Write-Host (\$p.Id.ToString().PadRight(8) + \$mem.ToString().PadRight(10) + \$cpu.ToString().PadRight(14) + \$p.ProcessName)
+        }
+    " 2>/dev/null | tr -d '\r'
     echo ""
     
     log_action "Listed top 10 memory consuming processes"
@@ -56,16 +70,17 @@ terminate_process() {
         return
     fi
     
-    # Check if process exists
-    if ! ps -p "$pid" > /dev/null 2>&1; then
+    # Check if process exists (Windows: use tasklist)
+    proc_line=$(tasklist /FI "PID eq $pid" /FO CSV /NH 2>/dev/null | tr -d '\r' | grep -v "^$" | head -1)
+    if [ -z "$proc_line" ] || echo "$proc_line" | grep -qi "No tasks"; then
         echo "Error: No process found with PID $pid."
         log_action "Process termination failed: PID $pid does not exist"
         return
     fi
-    
-    # Get process information
-    proc_name=$(ps -p "$pid" -o comm= 2>/dev/null)
-    proc_user=$(ps -p "$pid" -o user= 2>/dev/null)
+
+    # Get process information from tasklist CSV output
+    proc_name=$(echo "$proc_line" | cut -d',' -f1 | tr -d '"')
+    proc_user=$(powershell.exe -NoProfile -Command "(Get-Process -Id $pid -ErrorAction SilentlyContinue).UserName" 2>/dev/null | tr -d '\r' || echo "N/A")
     
     # List of critical PIDs that should never be terminated
     critical_pids=(1)
@@ -100,7 +115,7 @@ terminate_process() {
     
     case "$confirm" in
         [Yy]|[Yy][Ee][Ss])
-            if kill "$pid" 2>/dev/null; then
+            if taskkill /PID "$pid" /F > /dev/null 2>&1; then
                 echo "Success: Process $pid ($proc_name) has been terminated."
                 log_action "TERMINATED: Process PID $pid ($proc_name) by user"
             else
@@ -190,13 +205,13 @@ inspect_disk_and_logs() {
         one_gb=$((1024*1024*1024))
         
         if [ "$archive_size_bytes" -gt "$one_gb" ]; then
-            archive_size_gb=$(echo "scale=2; $archive_size_bytes / $one_gb" | bc)
+            archive_size_gb=$(awk -v b="$archive_size_bytes" 'BEGIN{printf "%.2f", b/1024/1024/1024}')
             echo "WARNING: ArchiveLogs directory exceeds 1GB!"
             echo "Current size: ${archive_size_gb}GB"
             echo "Consider cleaning up old archived logs to free disk space."
             log_action "WARNING: ArchiveLogs at $archive_dir exceeds 1GB (${archive_size_gb}GB)"
         else
-            archive_size_mb=$(echo "scale=2; $archive_size_bytes / 1024 / 1024" | bc)
+            archive_size_mb=$(awk -v b="$archive_size_bytes" 'BEGIN{printf "%.2f", b/1024/1024}')
             echo "Archive directory size: ${archive_size_mb}MB"
         fi
     fi
